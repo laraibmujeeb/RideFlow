@@ -2,77 +2,61 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\RideStatus;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
+use App\Http\Requests\ApproveDriverRequest;
+use App\Http\Requests\CreateRideRequest;
+use App\Http\Resources\RideResource;
 use App\Models\Ride;
-use App\Models\RideProposal;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PassengerController extends Controller
 {
-    // Create a ride request
-    public function create(Request $request)
+    public function create(CreateRideRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'passenger_id' => 'required|exists:users,id',
-            'pickup_lat' => 'required|numeric',
-            'pickup_lng' => 'required|numeric',
-            'dest_lat' => 'required|numeric',
-            'dest_lng' => 'required|numeric',
-        ]);
-
-        $ride = Ride::create(array_merge($validated, ['status' => 'pending']));
+        $ride = Ride::create(array_merge(
+            $request->validated(),
+            ['status' => RideStatus::PENDING]
+        ));
 
         return response()->json([
             'message' => 'Ride requested successfully',
-            'ride' => $ride
-        ], 201);
+            'ride' => new RideResource($ride),
+        ], Response::HTTP_CREATED);
     }
 
-    // Approve a driver
-    public function approveDriver(Request $request, $id)
+    public function approveDriver(ApproveDriverRequest $request, Ride $ride): JsonResponse
     {
-        $request->validate([
-            'driver_id' => 'required|exists:users,id',
-        ]);
-
-        $ride = Ride::findOrFail($id);
-
-        if ($ride->passenger_id != $request->passenger_id) { // Assuming passenger_id is sent or extracted from context
-             // In a real app we'd use Auth::id() but assuming we pass ID or no auth as per req
-             // "No authentication required - Although do consider ... how you handle"
-             // Use request->input('current_user_id') or similar if needed, but for now simple.
+        if ($ride->passenger_id != $request->passenger_id) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], Response::HTTP_FORBIDDEN);
         }
-
-        // Logic to verify this driver actually proposed?
-        // $proposal = RideProposal::where('ride_id', $ride->id)->where('driver_id', $request->driver_id)->firstOrFail();
 
         $ride->update([
             'driver_id' => $request->driver_id,
-            'status' => 'accepted'
+            'status' => RideStatus::ACCEPTED,
         ]);
 
         return response()->json([
             'message' => 'Driver approved',
-            'ride' => $ride
-        ]);
+            'ride' => new RideResource($ride->fresh()),
+        ], Response::HTTP_OK);
     }
 
-    // Mark completed
-    public function completeRide(Request $request, $id)
+    public function completeRide(Request $request, Ride $ride): JsonResponse
     {
-        $ride = Ride::findOrFail($id);
-        
         $ride->update(['passenger_completed_at' => now()]);
 
         if ($ride->driver_completed_at) {
-            $ride->update(['status' => 'completed']);
+            $ride->update(['status' => RideStatus::COMPLETED]);
         }
 
         return response()->json([
             'message' => 'Ride marked as completed by passenger',
-            'ride' => $ride
-        ]);
+            'ride' => new RideResource($ride->fresh()),
+        ], Response::HTTP_OK);
     }
 }

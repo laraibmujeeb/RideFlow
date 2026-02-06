@@ -2,120 +2,106 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\RideStatus;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
+use App\Http\Requests\GetNearbyRidesRequest;
+use App\Http\Requests\RequestRideRequest;
+use App\Http\Requests\UpdateLocationRequest;
+use App\Http\Resources\RideProposalResource;
+use App\Http\Resources\RideResource;
 use App\Models\Ride;
 use App\Models\RideProposal;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class DriverController extends Controller
 {
-    // Update driver location
-    public function updateLocation(Request $request)
+    public function updateLocation(UpdateLocationRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'driver_id' => 'required|exists:users,id',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-        ]);
+        $driver = User::findOrFail($request->driver_id);
 
-        $driver = User::findOrFail($validated['driver_id']);
-        
-        // Ensure user is a driver
         if ($driver->role !== 'driver') {
-            return response()->json(['message' => 'User is not a driver'], 403);
+            return response()->json([
+                'message' => 'User is not a driver',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         $driver->update([
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
-        return response()->json(['message' => 'Location updated']);
+        return response()->json([
+            'message' => 'Location updated',
+        ], Response::HTTP_OK);
     }
 
-    // Fetch nearby pending ride requests
-    public function getNearbyRides(Request $request)
+    public function getNearbyRides(GetNearbyRidesRequest $request): JsonResponse
     {
-        $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'radius' => 'nullable|numeric', // in km
-        ]);
-
         $lat = $request->latitude;
         $lng = $request->longitude;
-        $radius = $request->radius ?? 10; // default 10km
+        $radius = $request->radius ?? 10;
 
-        // Fetch all pending rides (in production, we'd use bounding box to limit results before fetching)
-        $rides = Ride::where('status', 'pending')->get();
-        
+        $rides = Ride::where('status', RideStatus::PENDING)->get();
+
         $rides = $rides->map(function ($ride) use ($lat, $lng) {
             $theta = $lng - $ride->pickup_lng;
-            $dist = sin(deg2rad($lat)) * sin(deg2rad($ride->pickup_lat)) +  cos(deg2rad($lat)) * cos(deg2rad($ride->pickup_lat)) * cos(deg2rad($theta));
-            $dist = acos($dist);
+            $dist = sin(deg2rad($lat)) * sin(deg2rad($ride->pickup_lat)) + cos(deg2rad($lat)) * cos(deg2rad($ride->pickup_lat)) * cos(deg2rad($theta));
+            $dist = acos(min(1, max(-1, $dist)));
             $dist = rad2deg($dist);
-            $miles = $dist * 60 * 1.1515;
-            $km = $miles * 1.609344;
-            
+            $km = $dist * 60 * 1.1515 * 1.609344;
+
             $ride->distance = round($km, 2);
             return $ride;
         })->filter(function ($ride) use ($radius) {
             return $ride->distance <= $radius;
         })->sortBy('distance')->values();
 
-        return response()->json($rides);
+        return response()->json(RideResource::collection($rides), Response::HTTP_OK);
     }
 
-    // Request/claim a ride
-    public function requestRide(Request $request, $id)
+    public function requestRide(RequestRideRequest $request, Ride $ride): JsonResponse
     {
-        $request->validate([
-            'driver_id' => 'required|exists:users,id',
-        ]);
-
-        $ride = Ride::findOrFail($id);
-
-        if ($ride->status !== 'pending') {
-            return response()->json(['message' => 'Ride is not available'], 400);
+        if ($ride->status !== RideStatus::PENDING) {
+            return response()->json([
+                'message' => 'Ride is not available',
+            ], Response::HTTP_BAD_REQUEST);
         }
 
-        // Create a proposal
-        // Check if already requested
-        $existing = RideProposal::where('ride_id', $id)
+        $existing = RideProposal::where('ride_id', $ride->id)
             ->where('driver_id', $request->driver_id)
             ->first();
 
         if ($existing) {
-            return response()->json(['message' => 'Ride already requested'], 200);
+            return response()->json([
+                'message' => 'Ride already requested',
+            ], Response::HTTP_OK);
         }
 
         $proposal = RideProposal::create([
-            'ride_id' => $id,
+            'ride_id' => $ride->id,
             'driver_id' => $request->driver_id,
         ]);
 
         return response()->json([
             'message' => 'Ride requested successfully',
-            'proposal' => $proposal
-        ]);
+            'proposal' => new RideProposalResource($proposal),
+        ], Response::HTTP_CREATED);
     }
 
-    // Mark ride as completed
-    public function completeRide(Request $request, $id)
+    public function completeRide(Request $request, Ride $ride): JsonResponse
     {
-        $ride = Ride::findOrFail($id);
-        
         $ride->update(['driver_completed_at' => now()]);
 
         if ($ride->passenger_completed_at) {
-            $ride->update(['status' => 'completed']);
+            $ride->update(['status' => RideStatus::COMPLETED]);
         }
 
         return response()->json([
             'message' => 'Ride marked as completed by driver',
-            'ride' => $ride
-        ]);
+            'ride' => new RideResource($ride->fresh()),
+        ], Response::HTTP_OK);
     }
 }

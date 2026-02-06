@@ -2,21 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,21 +20,11 @@ class User extends Authenticatable
         'longitude',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -51,17 +35,17 @@ class User extends Authenticatable
         ];
     }
 
-    public function ridesAsPassenger()
+    public function ridesAsPassenger(): HasMany
     {
         return $this->hasMany(Ride::class, 'passenger_id');
     }
 
-    public function ridesAsDriver()
+    public function ridesAsDriver(): HasMany
     {
         return $this->hasMany(Ride::class, 'driver_id');
     }
 
-    public function proposals()
+    public function proposals(): HasMany
     {
         return $this->hasMany(RideProposal::class, 'driver_id');
     }

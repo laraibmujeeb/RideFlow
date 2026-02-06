@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\RideStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ride extends Model
 {
@@ -23,21 +26,22 @@ class Ride extends Model
         'pickup_lng' => 'float',
         'dest_lat' => 'float',
         'dest_lng' => 'float',
+        'status' => RideStatus::class,
         'passenger_completed_at' => 'datetime',
         'driver_completed_at' => 'datetime',
     ];
 
-    public function passenger()
+    public function passenger(): BelongsTo
     {
         return $this->belongsTo(User::class, 'passenger_id');
     }
 
-    public function driver()
+    public function driver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'driver_id');
     }
 
-    public function proposals()
+    public function proposals(): HasMany
     {
         return $this->hasMany(RideProposal::class);
     }
