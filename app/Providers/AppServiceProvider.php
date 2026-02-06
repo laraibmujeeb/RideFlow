@@ -19,6 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // MySQL has native math functions, so we don't need to inject them manually like we did for SQLite.
     }
 }
