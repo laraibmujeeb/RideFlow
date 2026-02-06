@@ -1,0 +1,267 @@
+{
+    "info": {
+        "_postman_id": "rideflow-api-collection",
+        "name": "RideFlow API",
+        "description": "API Collection for testing the RideFlow ride-booking system lifecycle.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Passenger",
+            "item": [
+                {
+                    "name": "Create Ride Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"passenger_id\": 1,\n    \"pickup_lat\": 40.7128,\n    \"pickup_lng\": -74.0060,\n    \"dest_lat\": 40.7306,\n    \"dest_lng\": -73.9352\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/passenger/rides",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "passenger",
+                                "rides"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Approve Driver",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"driver_id\": 2\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/passenger/rides/1/approve-driver",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "passenger",
+                                "rides",
+                                "1",
+                                "approve-driver"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Passenger: Mark Complete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/passenger/rides/1/complete",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "passenger",
+                                "rides",
+                                "1",
+                                "complete"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Driver",
+            "item": [
+                {
+                    "name": "Update Location",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"driver_id\": 2,\n    \"latitude\": 40.7125,\n    \"longitude\": -74.0055\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/driver/location",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "driver",
+                                "location"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Nearby Rides",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/driver/rides/nearby?latitude=40.7120&longitude=-74.0050&radius=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "driver",
+                                "rides",
+                                "nearby"
+                            ],
+                            "query": [
+                                {
+                                    "key": "latitude",
+                                    "value": "40.7120"
+                                },
+                                {
+                                    "key": "longitude",
+                                    "value": "-74.0050"
+                                },
+                                {
+                                    "key": "radius",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Request Ride (Claim)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"driver_id\": 2\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/driver/rides/1/request",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "driver",
+                                "rides",
+                                "1",
+                                "request"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Driver: Mark Complete",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/driver/rides/1/complete",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "driver",
+                                "rides",
+                                "1",
+                                "complete"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://RideFlow.test",
+            "type": "string"
+        }
+    ]
+}
