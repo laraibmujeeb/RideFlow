@@ -1,59 +1,215 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚗 RideFlow
+
+A clean, production-ready **ride-booking REST API** and **Admin Panel** built with Laravel. This project demonstrates a complete ride-sharing backend system with geospatial queries, dual-confirmation completion logic, and a modern admin interface.
+
+---
+
+## ✨ Features
+
+| Module | Capabilities |
+|--------|-------------|
+| **Passenger API** | Request rides, approve drivers, mark rides complete |
+| **Driver API** | Update location, find nearby rides (geospatial), request rides, complete rides |
+| **Admin Panel** | Monitor all rides with premium glassmorphism UI |
+| **Business Logic** | Dual-confirmation: Ride is marked `completed` only when **both** passenger and driver confirm |
+
+---
+
+## 🔄 API Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              RIDEFLOW WORKFLOW                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    PASSENGER                         SYSTEM                           DRIVER
+        │                                │                                │
+        │  1. POST /passenger/rides      │                                │
+        │  ─────────────────────────────>│                                │
+        │  (pickup & destination coords) │                                │
+        │                                │                                │
+        │                                │<─────────────────────────────  │
+        │                                │  2. GET /driver/rides/nearby   │
+        │                                │  (driver sees available rides) │
+        │                                │                                │
+        │                                │<─────────────────────────────  │
+        │                                │  3. POST /driver/rides/{id}/   │
+        │                                │     request                    │
+        │                                │  (driver requests the ride)    │
+        │                                │                                │
+        │  4. POST /passenger/rides/     │                                │
+        │     {id}/approve-driver        │                                │
+        │  ─────────────────────────────>│                                │
+        │  (passenger picks a driver)    │                                │
+        │                                │                                │
+        │                                │         🚗 RIDE IN PROGRESS    │
+        │                                │                                │
+        │  5. POST /passenger/rides/     │                                │
+        │     {id}/complete              │                                │
+        │  ─────────────────────────────>│                                │
+        │                                │                                │
+        │                                │<─────────────────────────────  │
+        │                                │  6. POST /driver/rides/{id}/   │
+        │                                │     complete                   │
+        │                                │                                │
+        │                                │                                │
+        └────────────────────────────────┼────────────────────────────────┘
+                                         │
+                                 ✅ RIDE COMPLETED
+                           (only after BOTH confirm)
+```
+
+---
+
+## 📚 API Reference
+
+### Passenger Endpoints
+
+| Method | Endpoint | Description | Body |
+|--------|----------|-------------|------|
+| `POST` | `/api/passenger/rides` | Create a new ride request | `passenger_id`, `pickup_lat`, `pickup_lng`, `dest_lat`, `dest_lng` |
+| `POST` | `/api/passenger/rides/{id}/approve-driver` | Approve a driver for the ride | `driver_id`, `passenger_id` |
+| `POST` | `/api/passenger/rides/{id}/complete` | Mark ride as completed (passenger side) | – |
+
+### Driver Endpoints
+
+| Method | Endpoint | Description | Body/Query |
+|--------|----------|-------------|------------|
+| `POST` | `/api/driver/location` | Update driver's current location | `driver_id`, `latitude`, `longitude` |
+| `GET` | `/api/driver/rides/nearby` | Fetch nearby pending rides | `?latitude=...&longitude=...&radius=...` |
+| `POST` | `/api/driver/rides/{id}/request` | Request to accept a ride | `driver_id` |
+| `POST` | `/api/driver/rides/{id}/complete` | Mark ride as completed (driver side) | – |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: Laravel 11
+- **Database**: SQLite (easily switchable to MySQL/PostgreSQL)
+- **API**: RESTful JSON APIs
+- **Admin UI**: Blade templates with Tailwind CSS & glassmorphism design
+- **Icons**: Lucide Icons
+- **Testing**: PHPUnit Feature Tests
+- **API Testing**: Postman Collection included
+
+---
+
+## 🚀 Installation
+
+### Prerequisites
+- PHP 8.2+
+- Composer
+- Node.js (optional, for asset compilation)
+
+### Steps
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/rideflow.git
+cd rideflow
+
+# 2. Install PHP dependencies
+composer install
+
+# 3. Environment setup
+cp .env.example .env
+
+# 4. Generate application key
+php artisan key:generate
+
+# 5. Create SQLite database
+touch database/database.sqlite
+
+# 6. Run migrations & seed sample data
+php artisan migrate
+php artisan db:seed --class=RideSeeder
+
+# 7. Start the development server
+php artisan serve
+```
+
+The application will be available at `http://localhost:8000`
+
+---
+
+## 🎛️ Admin Panel
+
+Access the admin dashboard at:
+```
+http://localhost:8000/admin/rides
+```
+
+Features:
+- View all rides with status indicators
+- Click on any ride to see detailed information
+- Premium dark-themed UI with glassmorphism effects
+- Real-time status badges (Pending, Accepted, Completed)
+
+---
+
+## 📦 Postman Collection
+
+A complete Postman collection is included for API testing:
+
+```
+RideFlow.postman_collection.json
+```
+
+Import this file into Postman to test all endpoints with pre-configured requests.
+
+---
+
+## 🧪 Testing
+
+Run the feature tests:
+
+```bash
+php artisan test
+```
+
+Or run specific test files:
+
+```bash
+php artisan test --filter=RideFlowTest
+```
+
+---
+
+## 📁 Project Structure
+
+```
+rideflow/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── Admin/
+│   │   │   └── RideController.php      # Admin panel controller
+│   │   └── Api/
+│   │       ├── DriverController.php    # Driver API endpoints
+│   │       └── PassengerController.php # Passenger API endpoints
+│   └── Models/
+│       ├── Ride.php                    # Ride model
+│       ├── RideProposal.php            # Driver proposals for rides
+│       └── User.php                    # User model (passengers & drivers)
+├── database/
+│   ├── migrations/                     # Database schema
+│   └── seeders/
+│       └── RideSeeder.php              # Sample data seeder
+├── resources/views/admin/              # Admin panel Blade views
+├── routes/
+│   ├── api.php                         # API routes
+│   └── web.php                         # Web routes (admin panel)
+└── tests/Feature/
+    └── RideFlowTest.php                # Feature tests
+```
+
+---
+
+## 📄 License
+
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  Built with ❤️ using Laravel
 </p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
