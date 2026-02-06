@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -34,7 +37,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
      * @return array<string, string>
      */
@@ -43,6 +46,23 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
+    }
+
+    public function ridesAsPassenger()
+    {
+        return $this->hasMany(Ride::class, 'passenger_id');
+    }
+
+    public function ridesAsDriver()
+    {
+        return $this->hasMany(Ride::class, 'driver_id');
+    }
+
+    public function proposals()
+    {
+        return $this->hasMany(RideProposal::class, 'driver_id');
     }
 }
