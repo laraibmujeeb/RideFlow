@@ -130,17 +130,17 @@
                                 @endif
                             </td>
                             <td class="px-8 py-6">
-                                @if($ride->status === 'completed')
+                                @if($ride->status->value === 'completed')
                                 <div class="status-completed inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wider">
-                                    <span class="status-dot bg-emerald-400"></span> {{ strtoupper($ride->status) }}
+                                    <span class="status-dot bg-emerald-400"></span> {{ strtoupper($ride->status->value) }}
                                 </div>
-                                @elseif($ride->status === 'pending')
+                                @elseif($ride->status->value === 'pending')
                                 <div class="status-pending inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wider">
-                                    <span class="status-dot bg-amber-400"></span> {{ strtoupper($ride->status) }}
+                                    <span class="status-dot bg-amber-400"></span> {{ strtoupper($ride->status->value) }}
                                 </div>
                                 @else
                                 <div class="status-default inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wider">
-                                    <span class="status-dot bg-indigo-400"></span> {{ strtoupper($ride->status) }}
+                                    <span class="status-dot bg-indigo-400"></span> {{ strtoupper($ride->status->value) }}
                                 </div>
                                 @endif
                             </td>

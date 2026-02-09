@@ -52,17 +52,17 @@
                 <!-- Session Identity Card -->
                 <div class="glass rounded-3xl p-8 relative overflow-hidden">
                     <div class="absolute top-0 right-0 p-8">
-                        @if($ride->status === 'completed')
+                        @if($ride->status->value === 'completed')
                         <div class="status-completed inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold tracking-widest">
-                            {{ strtoupper($ride->status) }}
+                            {{ strtoupper($ride->status->value) }}
                         </div>
-                        @elseif($ride->status === 'pending')
+                        @elseif($ride->status->value === 'pending')
                         <div class="status-pending inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold tracking-widest">
-                            {{ strtoupper($ride->status) }}
+                            {{ strtoupper($ride->status->value) }}
                         </div>
                         @else
                         <div class="status-default inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold tracking-widest">
-                            {{ strtoupper($ride->status) }}
+                            {{ strtoupper($ride->status->value) }}
                         </div>
                         @endif
                     </div>
